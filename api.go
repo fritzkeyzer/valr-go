@@ -3,7 +3,6 @@ package valr
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -94,9 +93,6 @@ func (cl *Client) GetTradeHistory(pair string, skip int, limit int, startTime ti
 
 	var startTimeString = startTime.UTC().Format("2006-01-02T15:04:05.999999Z")
 	var stopTimeString = stopTime.UTC().Format("2006-01-02T15:04:05.999999Z")
-
-	log.Println(startTimeString)
-	log.Println(stopTimeString)
 
 	var path = fmt.Sprintf("/v1/marketdata/%s/tradehistory?skip=%v&limit=%v&startTime=%s&endTime=%s", pair, skip, limit, startTimeString, stopTimeString)
 	resJsonBytes, err := cl.SendRequest("GET", path)
