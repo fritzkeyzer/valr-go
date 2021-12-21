@@ -1,16 +1,16 @@
 package valr
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -109,11 +109,92 @@ func (cl *Client) SendRequest(method string, path string) ([]byte, error) {
 	}
 
 	if cl.debug {
-		PrettyPrintBytes(body)
+		pretty, err := PrettyPrintBytes(body)
+		if err != nil {
+			return body, err
+		}
+		log.Printf("valr: %v", pretty)
 	}
 
 	return body, nil
 }
+
+/*func (cl *Client) do(ctx context.Context, method, path string, req, res interface{}, auth bool) error {
+
+	url := cl.baseURL + "/" + strings.TrimLeft(path, "/")
+
+	if cl.debug {
+		log.Printf("valr: Call: %s %s", method, path)
+		log.Printf("valr: Request: %#v", req)
+	}
+
+	var contentType string
+	var body io.Reader
+	if req != nil {
+		values := makeURLValues(req)
+		if strings.Contains(path, "{id}") {
+			url = strings.Replace(url, "{id}", values.Get("id"), -1)
+			values.Del("id")
+		}
+		if method == http.MethodGet {
+			url = url + "?" + values.Encode()
+		} else {
+			body = strings.NewReader(values.Encode())
+			contentType = "application/x-www-form-urlencoded"
+		}
+	}
+
+	httpReq, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return err
+	}
+	httpReq = httpReq.WithContext(ctx)
+	httpReq.Header.Set("User-Agent", makeUserAgent())
+	if contentType != "" {
+		httpReq.Header.Set("Content-Type", contentType)
+	}
+
+	if auth {
+		httpReq.SetBasicAuth(cl.apiKeyID, cl.apiKeySecret)
+	}
+
+	if method != http.MethodGet {
+		httpReq.Header.Set("content-type", "application/x-www-form-urlencoded")
+	}
+
+	httpRes, err := cl.httpClient.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer httpRes.Body.Close()
+
+	body = httpRes.Body
+	if cl.debug {
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			log.Printf("luno: Error reading response body: %v", err)
+		} else {
+			log.Printf("Response: %s", string(b))
+		}
+		body = bytes.NewReader(b)
+	}
+
+	if httpRes.StatusCode == http.StatusTooManyRequests {
+		return errors.New("luno: too many requests")
+	}
+
+	if httpRes.StatusCode != http.StatusOK {
+		var e Error
+		err := json.NewDecoder(body).Decode(&e)
+		if err != nil {
+			return fmt.Errorf("luno: error decoding response (%d %s)",
+				httpRes.StatusCode, http.StatusText(httpRes.StatusCode))
+		}
+		return e
+	}
+
+	return json.NewDecoder(body).Decode(res)
+}*/
 
 func signRequest(apiSecret string, timestamp time.Time, verb string, path string, body string) (string, string) {
 	// Create a new Keyed-Hash Message Authentication Code (HMAC) using SHA512 and API Secret
@@ -128,17 +209,7 @@ func signRequest(apiSecret string, timestamp time.Time, verb string, path string
 	return hex.EncodeToString(mac.Sum(nil)), timestampString
 }
 
-func PrettyPrint(jString string) {
-	PrettyPrintBytes([]byte(jString))
-}
-
-func PrettyPrintBytes(jBytes []byte) {
-	var prettyJSON bytes.Buffer
-	error := json.Indent(&prettyJSON, jBytes, "", "\t")
-	if error != nil {
-		log.Println("JSON parse error: ", error)
-		return
-	}
-
-	log.Println(string(prettyJSON.Bytes()))
+func makeUserAgent() string {
+	return fmt.Sprintf("ValrGoSDK/%s %s %s %s",
+		Version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }

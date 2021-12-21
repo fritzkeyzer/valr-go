@@ -4,27 +4,38 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/fritzkeyzer/valr-go"
 	"log"
+	"time"
 )
 
 func main() {
 	valrClient := valr.NewClient()
-	//valrClient.SetDebug(true)
-	//valrClient.SetAuth("api_key_id", "api_key_secret")
+	valrClient.SetDebug(true)
 	err := valrClient.LoadAuthFile("env.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	res, err := valrClient.GetOrderBook("XRPZAR")
-	if err != nil {
-		log.Fatal(err)
+	/*{
+		res, err := valrClient.GetOrderBook("USDCZAR")
+		if err != nil {
+			log.Fatal(err)
+		}
+		spew.Dump(res)
+	}*/
+
+	/*{
+		res, err := valrClient.GetBalances()
+		if err != nil {
+			log.Fatal(err)
+		}
+		spew.Dump(res)
+	}*/
+
+	{
+		res, err := valrClient.GetTradeHistory("BTCZAR", 0, 100, time.Now().Add(time.Hour*-24*365), time.Now())
+		if err != nil {
+			log.Fatal(err)
+		}
+		spew.Dump(res)
 	}
-
-	spew.Dump(res)
-
-	//log.Println(res.Asks[len(res.Asks)-1].Price)
-	//log.Println(res.Asks[0].Price)
-
-	//log.Println(res.Bids[0].Price)
-	//log.Println(res.Bids[len(res.Bids)-1].Price)
 }
