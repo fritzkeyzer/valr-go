@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
+	"github.com/fritzkeyzer/valr-go"
 	"log"
-	"valr"
 )
 
 func main() {

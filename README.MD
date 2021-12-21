@@ -30,7 +30,7 @@ package main
 import (
 	"github.com/davecgh/go-spew/spew"
 	"log"
-	"valr"
+	"github.com/fritzkeyzer/valr-go"
 )
 
 func main() {
